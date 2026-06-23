@@ -90,17 +90,21 @@ public class ApiServer {
             }
             sendJson(exchange, 200,
                 "{" +
-                "\"mod\":\"hermes-link\"," +
-                "\"version\":\"1.0.0\"," +
+                "\"mod\":\"scribe\"," +
+                "\"version\":\"" + ScribeMod.VERSION + "\"," +
                 "\"endpoints\":[" +
+                "\"GET /\"," +
                 "\"GET /player\"," +
                 "\"GET /player/inventory\"," +
                 "\"GET /player/nearby?radius=10\"," +
                 "\"GET /world/block?x=0&y=64&z=0\"," +
                 "\"GET /world/blocks?x=0&y=64&z=0&radius=5\"," +
+                "\"GET /chat/history\"," +
+                "\"GET /chat/poll?since=0&timeout=30000\"," +
                 "\"POST /action/chat\"," +
                 "\"POST /action/click\"," +
-                "\"POST /action/move\"" +
+                "\"POST /action/move\"," +
+                "\"POST /action/book\"" +
                 "]" +
                 "}"
             );
