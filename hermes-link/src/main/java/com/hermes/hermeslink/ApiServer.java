@@ -38,6 +38,7 @@ public class ApiServer {
             server.createContext("/action/chat", new ActionHandler.ChatHandler(allowActions));
             server.createContext("/action/click", new ActionHandler.ClickHandler(allowActions));
             server.createContext("/action/move", new ActionHandler.MoveHandler(allowActions));
+            server.createContext("/action/book", new BookHandler(allowActions));
 
             server.start();
         } catch (IOException e) {

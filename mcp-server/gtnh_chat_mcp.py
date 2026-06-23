@@ -118,6 +118,10 @@ class HermesLink:
     def move(self, x: float, y: float, z: float) -> dict:
         return self._post("/action/move", {"x": x, "y": y, "z": z})
 
+    def write_book(self, title: str, author: str, pages: list[str]) -> dict:
+        """Create a written book and give it to the player. Max 50 pages, 256 chars each."""
+        return self._post("/action/book", {"title": title, "author": author, "pages": pages})
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # MCP Server
@@ -345,6 +349,37 @@ def tool_click_block(x: int, y: int, z: int, button: str = "right") -> str:
     return f"{button}-clicked block at ({x}, {y}, {z})"
 
 
+def tool_write_book(title: str, author: str, pages_json: str) -> str:
+    """Create a written book and give it to the player. Pages is a JSON array of strings."""
+    err = _check_connected()
+    if err:
+        return err
+
+    if not title or not title.strip():
+        return "Error: title cannot be empty"
+
+    # Parse pages from JSON string
+    try:
+        pages = json.loads(pages_json)
+    except json.JSONDecodeError as e:
+        return f"Error parsing pages JSON: {e}"
+
+    if not isinstance(pages, list):
+        return "Error: pages must be a JSON array of strings"
+
+    if not pages:
+        return "Error: pages array cannot be empty"
+
+    if len(pages) > 50:
+        return f"Error: max 50 pages, got {len(pages)}"
+
+    result = link.write_book(title, author or "Hermes", pages)
+    if "error" in result:
+        return f"Error writing book: {result['error']}"
+
+    return f"Written book '{title}' created with {result.get('pages', len(pages))} pages — check your inventory"
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # MCP Server Setup (stdio transport)
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -446,6 +481,19 @@ def main():
                     "required": ["x", "y", "z"],
                 },
             ),
+            Tool(
+                name="gtnh_write_book",
+                description="Create a written book and give it to the player. Use for verbose reports that don't fit in chat — ore surveys, quest summaries, base layouts. Max 50 pages, 256 chars each. Pages is a JSON array of strings.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string", "description": "Book title"},
+                        "author": {"type": "string", "description": "Author name (default: Hermes)", "default": "Hermes"},
+                        "pages": {"type": "string", "description": "JSON array of page strings, e.g. '[\"page1\", \"page2\"]'"},
+                    },
+                    "required": ["title", "pages"],
+                },
+            ),
         ]
 
     @server.call_tool()
@@ -467,6 +515,11 @@ def main():
                 int(arguments.get("y", 64)),
                 int(arguments.get("z", 0)),
                 arguments.get("button", "right"),
+            ),
+            "gtnh_write_book": lambda: tool_write_book(
+                arguments.get("title", "Agent Report"),
+                arguments.get("author", "Hermes"),
+                arguments.get("pages", "[]"),
             ),
         }
 
