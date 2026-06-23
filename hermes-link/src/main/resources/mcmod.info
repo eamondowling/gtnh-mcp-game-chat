@@ -1,12 +1,12 @@
 [
   {
-    "modid": "hermes-link",
-    "name": "Hermes Link",
-    "description": "HTTP API bridge for AI agents to read and control Minecraft. Platform-independent — runs anywhere Forge runs.",
+    "modid": "scribe",
+    "name": "Scribe",
+    "description": "MCP bridge for AI agents — chat, books, world interaction. Cross-platform.",
     "version": "${version}",
     "mcversion": "${mcversion}",
     "url": "",
-    "authorList": ["Hermes Agent"],
+    "authorList": ["Scribe"],
     "credits": "",
     "logoFile": "",
     "screenshots": [],

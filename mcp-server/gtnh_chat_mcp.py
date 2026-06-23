@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-GTNH Chat MCP Server — bridges an AI agent into Minecraft GTNH chat.
+GTNH Chat MCP Server — bridges an AI agent into Minecraft GTNH chat via the Scribe mod.
 
 Architecture:
-    Hermes Agent
+    AI Agent (Hermes, Claude, Codex, etc.)
       └── MCP (stdio transport)
             └── gtnh_chat_mcp.py  ← you are here
-                  └── Hermes Link HTTP API (localhost:25566)
-                        └── Minecraft + GTNH + Hermes Link mod
+                  └── Scribe mod HTTP API (localhost:25566)
+                        └── Minecraft + GTNH + Scribe mod
 
 This MCP server exposes tools that let an agent:
 - Read incoming chat messages (poll-based, non-blocking)

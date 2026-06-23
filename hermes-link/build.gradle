@@ -21,9 +21,9 @@ buildscript {
 apply plugin: 'java'
 apply plugin: 'com.gtnewhorizons.retrofuturagradle'
 
-group = "com.hermes.hermeslink"
-version = "1.0.0"
-archivesBaseName = "hermes-link"
+group = "com.scribe.scribemod"
+version = "1.1.0"
+archivesBaseName = "scribe"
 
 java {
     toolchain {
@@ -33,7 +33,7 @@ java {
 
 minecraft {
     mcVersion = "1.7.10"
-    username = "HermesAgent"
+    username = "ScribeAgent"
 }
 
 // No external dependencies — uses JDK's built-in com.sun.net.httpserver
@@ -51,7 +51,7 @@ processResources {
 
 jar {
     manifest {
-        attributes 'FMLCorePlugin': 'com.hermes.hermeslink.HermesLink'
+        attributes 'FMLCorePlugin': 'com.scribe.scribemod.ScribeMod'
         attributes 'FMLCorePluginContainsFMLMod': 'true'
     }
 }

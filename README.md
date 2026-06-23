@@ -1,8 +1,8 @@
 # GTNH MCP Game Chat
 
-An MCP (Model Context Protocol) server that bridges AI agents into Minecraft GTNH chat. The agent appears as a player — it reads chat messages, responds, and can control the game through a local HTTP API.
+An MCP (Model Context Protocol) server that bridges AI agents into Minecraft GTNH chat via the **Scribe** mod. The agent appears as a player — it reads chat messages, responds, writes books, and can control the game through a local HTTP API.
 
-**Cross-platform** — the MCP server is pure Python (Windows, macOS, Linux). The Hermes Link mod is pure Java (anywhere Forge runs). Works with any MCP-compatible agent: Hermes, Claude, Codex, OpenClaw, Pi-agent, etc.
+**Cross-platform** — the MCP server is pure Python (Windows, macOS, Linux). The Scribe mod is pure Java (anywhere Forge runs). Works with any MCP-compatible agent: Hermes, Claude, Codex, OpenClaw, Pi-agent, etc.
 
 ## Architecture
 
@@ -15,12 +15,13 @@ An MCP (Model Context Protocol) server that bridges AI agents into Minecraft GTN
 └──────────────────────┘                          HTTP (localhost:25566)
                                                          │
                                               ┌──────────▼───────────┐
-                                              │  Hermes Link mod     │
+                                              │  Scribe mod          │
                                               │  (Forge 1.7.10)      │
                                               │                      │
                                               │  Chat capture        │
                                               │  Player state        │
                                               │  Block scanning      │
+                                              │  Written books       │
                                               │  Actions (chat,      │
                                               │   click, teleport)   │
                                               └──────────┬───────────┘
@@ -43,15 +44,31 @@ An MCP (Model Context Protocol) server that bridges AI agents into Minecraft GTN
 | `gtnh_scan_blocks` | Survey non-air blocks around player |
 | `gtnh_teleport` | Teleport to exact coordinates |
 | `gtnh_click_block` | Right/left click a block |
+| `gtnh_write_book` | Create a written book (max 50 pages, 256 chars each) |
+
+## The Book Pattern
+
+Minecraft chat is limited to ~100 characters. Scribe uses **written books** for verbose output:
+
+- **Chat**: brief acknowledgments ("On it.", "Report ready — check your inventory.")
+- **Books**: full reports — ore surveys, inventory dumps, quest summaries, base layouts
+
+Books appear in your inventory. Right-click to read. If inventory is full, they drop at your feet.
+
+## In-Game Guide Book
+
+When you install the Scribe mod and join a world, a **"Scribe Agent Guide"** book appears in your inventory automatically. It covers commands, actions, scanning, inventory, books, tips, and examples.
+
+If you lose it, type `/scribe guide` in chat to get a fresh copy. Anyone can use this command.
 
 ## Quick Start
 
 ### 1. Build and install the mod
 
 ```bash
-cd hermes-link
+cd scribe-mod
 ./gradlew build
-# Copy build/libs/hermes-link-1.1.0.jar into your GTNH instance's mods/ folder
+# Copy build/libs/scribe-1.1.0.jar into your GTNH instance's mods/ folder
 ```
 
 Requires JDK 17+ and Gradle 7.6+ (uses RetroFuturaGradle for 1.7.10 targeting).
@@ -95,7 +112,7 @@ mcp_servers:
 
 ### 4. Launch Minecraft
 
-Start GTNH through Prism Launcher. Load a world. The Hermes Link API starts on `localhost:25566`.
+Start GTNH through Prism Launcher. Load a world. The Scribe API starts on `localhost:25566`. You'll get the guide book automatically.
 
 ### 5. Restart your agent
 
@@ -106,12 +123,13 @@ The MCP server connects on startup. Tools appear with the `gtnh_` prefix.
 ```
 Agent loop:
   1. gtnh_chat_read    → see what players are saying
-  2. gtnh_chat_send    → respond to questions
+  2. gtnh_chat_send    → brief ack in chat
   3. gtnh_player_status → check position, health
   4. gtnh_inventory    → check what you're carrying
   5. gtnh_scan_blocks  → survey the area
-  6. gtnh_teleport     → move to a location
-  7. gtnh_click_block  → interact with a machine or chest
+  6. gtnh_write_book   → full report as a readable book
+  7. gtnh_teleport     → move to a location
+  8. gtnh_click_block  → interact with a machine or chest
 ```
 
 ## Project Structure
@@ -119,27 +137,29 @@ Agent loop:
 ```
 gtnh-mcp-game-chat/
 ├── README.md
-├── hermes-link/                    # Forge 1.7.10 mod
+├── scribe-mod/                     # Forge 1.7.10 mod
 │   ├── build.gradle
 │   ├── gradlew / gradlew.bat
-│   └── src/main/java/com/hermes/hermeslink/
-│       ├── HermesLink.java         # @Mod entry point + config
+│   └── src/main/java/com/scribe/scribemod/
+│       ├── ScribeMod.java          # @Mod entry point + /scribe guide command
 │       ├── ApiServer.java          # HTTP server + chat endpoints
+│       ├── GuideBook.java          # Auto-given instruction book
 │       ├── chat/
 │       │   └── ChatListener.java   # Forge event bus chat capture
 │       └── api/
 │           ├── PlayerHandler.java  # /player, /inventory, /nearby
 │           ├── WorldHandler.java   # /world/block, /world/blocks
-│           └── ActionHandler.java  # /action/chat, /click, /move
+│           ├── ActionHandler.java  # /action/chat, /click, /move
+│           └── BookHandler.java    # /action/book — written books
 └── mcp-server/
-    └── gtnh_chat_mcp.py            # MCP stdio server
+    └── gtnh_chat_mcp.py            # MCP stdio server (9 tools)
 ```
 
 ## Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `GTNH_MCP_BASE_URL` | `http://127.0.0.1:25566` | Hermes Link API URL |
+| `GTNH_MCP_BASE_URL` | `http://127.0.0.1:25566` | Scribe mod API URL |
 | `GTNH_MCP_TOKEN` | `""` | Bearer token (if auth is enabled in mod config) |
 
 ## Cross-Platform Notes
@@ -159,9 +179,9 @@ gtnh-mcp-game-chat/
 
 ## Security
 
-- Hermes Link binds to `127.0.0.1` only — not accessible from the network
+- Scribe binds to `127.0.0.1` only — not accessible from the network
 - Optional bearer token auth via mod config
-- Action endpoints (chat send, click, teleport) can be disabled entirely
+- Action endpoints (chat send, click, teleport, book) can be disabled entirely
 - MCP server runs as a local subprocess — no network exposure
 
 ## License
