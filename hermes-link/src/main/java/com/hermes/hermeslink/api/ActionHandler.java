@@ -64,6 +64,10 @@ public class ActionHandler {
             server.getConfigurationManager().sendChatMsg(
                 new ChatComponentText("<" + player.getCommandSenderName() + "> " + message)
             );
+            // Record in chat history so the agent can read its own messages
+            com.hermes.hermeslink.chat.ChatListener.recordMessage(
+                player.getCommandSenderName(), message
+            );
 
             ApiServer.sendJson(exchange, 200, "{\"sent\":true,\"message\":\"" + ApiServer.escapeJson(message) + "\"}");
         }
@@ -191,11 +195,15 @@ public class ActionHandler {
     }
 
     private static String extractJsonString(String json, String key) {
-        // Minimal JSON string extractor: "key":"value"
-        String search = "\"" + key + "\":\"";
+        // Minimal JSON string extractor: "key":"value" or "key": "value"
+        String search = "\"" + key + "\":";
         int start = json.indexOf(search);
         if (start == -1) return null;
         start += search.length();
+        // Skip optional whitespace after colon
+        while (start < json.length() && (json.charAt(start) == ' ' || json.charAt(start) == '\t')) start++;
+        if (start >= json.length() || json.charAt(start) != '"') return null;
+        start++; // skip opening quote
         int end = json.indexOf("\"", start);
         if (end == -1) return null;
         return json.substring(start, end);

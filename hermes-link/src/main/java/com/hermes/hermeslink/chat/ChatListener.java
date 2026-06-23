@@ -21,9 +21,17 @@ public class ChatListener {
 
     @SubscribeEvent
     public void onChatMessage(ServerChatEvent event) {
+        recordMessage(event.username, event.message);
+    }
+
+    /**
+     * Record a message directly — used by the API's chat sender so outgoing
+     * messages also appear in history. Thread-safe.
+     */
+    public static void recordMessage(String username, String message) {
         ChatMessage msg = new ChatMessage(
-            event.username,
-            event.message,
+            username,
+            message,
             System.currentTimeMillis()
         );
 
