@@ -1,6 +1,7 @@
 package com.scribe.scribemod;
 
 import com.scribe.scribemod.api.*;
+import com.scribe.scribemod.chat.ChatListener;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -10,6 +11,7 @@ import net.minecraft.server.MinecraftServer;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.concurrent.Executors;
 
 public class ApiServer {
@@ -39,6 +41,8 @@ public class ApiServer {
             server.createContext("/action/click", new ActionHandler.ClickHandler(allowActions));
             server.createContext("/action/move", new ActionHandler.MoveHandler(allowActions));
             server.createContext("/action/book", new BookHandler(allowActions));
+            server.createContext("/chat/history", new ChatHistoryHandler());
+            server.createContext("/chat/poll", new ChatPollHandler());
 
             server.start();
         } catch (IOException e) {
@@ -109,5 +113,82 @@ public class ApiServer {
                 "}"
             );
         }
+    }
+
+    // --- Chat history handler ---
+
+    static class ChatHistoryHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if (!"GET".equals(exchange.getRequestMethod())) {
+                sendError(exchange, 405, "Method not allowed");
+                return;
+            }
+
+            List<ChatListener.ChatMessage> messages = ChatListener.getHistory();
+            StringBuilder sb = new StringBuilder("{\"messages\":[");
+            boolean first = true;
+            for (ChatListener.ChatMessage msg : messages) {
+                if (!first) sb.append(",");
+                first = false;
+                sb.append(msg.toJson());
+            }
+            sb.append("]}");
+            sendJson(exchange, 200, sb.toString());
+        }
+    }
+
+    // --- Chat poll handler (long-poll for new messages) ---
+
+    static class ChatPollHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if (!"GET".equals(exchange.getRequestMethod())) {
+                sendError(exchange, 405, "Method not allowed");
+                return;
+            }
+
+            long since = 0;
+            long timeout = 30000;
+            String qSince = getQueryParam(exchange, "since");
+            String qTimeout = getQueryParam(exchange, "timeout");
+            if (qSince != null) {
+                try { since = Long.parseLong(qSince); } catch (NumberFormatException ignored) {}
+            }
+            if (qTimeout != null) {
+                try { timeout = Long.parseLong(qTimeout); } catch (NumberFormatException ignored) {}
+            }
+
+            List<ChatListener.ChatMessage> messages = ChatListener.pollNewMessages(since, timeout);
+            boolean timedOut = messages.isEmpty();
+
+            StringBuilder sb = new StringBuilder("{\"messages\":[");
+            boolean first = true;
+            for (ChatListener.ChatMessage msg : messages) {
+                if (!first) sb.append(",");
+                first = false;
+                sb.append(msg.toJson());
+            }
+            sb.append("],\"timed_out\":").append(timedOut).append("}");
+            sendJson(exchange, 200, sb.toString());
+        }
+    }
+
+    // --- Query param helper ---
+
+    static String getQueryParam(HttpExchange exchange, String key) {
+        String query = exchange.getRequestURI().getQuery();
+        if (query == null) return null;
+        for (String pair : query.split("&")) {
+            String[] kv = pair.split("=", 2);
+            if (kv.length == 2 && kv[0].equals(key)) {
+                try {
+                    return java.net.URLDecoder.decode(kv[1], "UTF-8");
+                } catch (Exception e) {
+                    return kv[1];
+                }
+            }
+        }
+        return null;
     }
 }
