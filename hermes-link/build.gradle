@@ -1,0 +1,57 @@
+// GTNH-style buildscript — works with Java 17+
+// Uses the GTNH fork of ForgeGradle that supports modern JDKs.
+
+buildscript {
+    repositories {
+        mavenCentral()
+        maven {
+            name = "forge"
+            url = "https://maven.minecraftforge.net/"
+        }
+        maven {
+            name = "gtnh"
+            url = "https://nexus.gtnewhorizons.com/repository/public/"
+        }
+    }
+    dependencies {
+        classpath 'com.gtnewhorizons:retrofuturagradle:1.4.1'
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'com.gtnewhorizons.retrofuturagradle'
+
+group = "com.hermes.hermeslink"
+version = "1.0.0"
+archivesBaseName = "hermes-link"
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+}
+
+minecraft {
+    mcVersion = "1.7.10"
+    username = "HermesAgent"
+}
+
+// No external dependencies — uses JDK's built-in com.sun.net.httpserver
+
+processResources {
+    def expandProps = [
+        "version": project.version,
+        "mcversion": project.minecraft.mcVersion
+    ]
+    inputs.properties expandProps
+    filesMatching("mcmod.info") {
+        expand expandProps
+    }
+}
+
+jar {
+    manifest {
+        attributes 'FMLCorePlugin': 'com.hermes.hermeslink.HermesLink'
+        attributes 'FMLCorePluginContainsFMLMod': 'true'
+    }
+}

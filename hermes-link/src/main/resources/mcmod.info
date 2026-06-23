@@ -1,0 +1,15 @@
+[
+  {
+    "modid": "hermes-link",
+    "name": "Hermes Link",
+    "description": "HTTP API bridge for AI agents to read and control Minecraft. Platform-independent — runs anywhere Forge runs.",
+    "version": "${version}",
+    "mcversion": "${mcversion}",
+    "url": "",
+    "authorList": ["Hermes Agent"],
+    "credits": "",
+    "logoFile": "",
+    "screenshots": [],
+    "dependencies": []
+  }
+]
