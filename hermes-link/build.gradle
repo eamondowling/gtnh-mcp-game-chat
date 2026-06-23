@@ -50,8 +50,6 @@ processResources {
 }
 
 jar {
-    manifest {
-        attributes 'FMLCorePlugin': 'com.scribe.scribemod.ScribeMod'
-        attributes 'FMLCorePluginContainsFMLMod': 'true'
-    }
+    // Scribe is a regular @Mod, NOT a coremod.
+    // No FMLCorePlugin manifest needed — the @Mod annotation handles discovery.
 }
