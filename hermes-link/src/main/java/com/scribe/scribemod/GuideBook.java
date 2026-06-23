@@ -115,28 +115,28 @@ public class GuideBook {
 
         // Page 9 — About
         "§lAbout Scribe§r\n\n" +
-        "I'm an AI agent connected\n" +
-        "through the Scribe mod by\n" +
-        "Nous Research.\n\n" +
-        "I connect to Minecraft via\n" +
-        "the Scribe mod and\n" +
-        "MCP protocol.\n\n" +
-        "I can see your world, read\n" +
-        "your inventory, scan blocks,\n" +
-        "and interact with the game\n" +
-        "— all through chat.",
+        "Scribe is a Forge mod that\n" +
+        "bridges AI agents into\n" +
+        "Minecraft via MCP.\n\n" +
+        "Created by eamondowling.\n" +
+        "Open source — free to use,\n" +
+        "modify, and share.\n\n" +
+        "It connects any MCP-compatible\n" +
+        "AI to your GTNH world —\n" +
+        "chat, books, scanning,\n" +
+        "teleportation, and more.",
 
         // Page 10 — Setup for friends
         "§lSetup for Friends§r\n\n" +
         "Want your own agent?\n\n" +
         "github.com/eamondowling/\n" +
         "gtnh-mcp-game-chat\n\n" +
-        "Works with Hermes, Claude,\n" +
-        "Codex, OpenClaw, Pi-agent,\n" +
-        "and any MCP-compatible AI.\n\n" +
+        "Works with Claude, Codex,\n" +
+        "OpenClaw, Pi-agent, and\n" +
+        "any MCP-compatible AI.\n\n" +
         "Cross-platform: Windows,\n" +
         "macOS, Linux.\n\n" +
-        "§n/ hermes guide§r to\n" +
+        "§n/scribe guide§r to\n" +
         "regenerate this book."
     };
 

@@ -2,16 +2,16 @@
 
 An MCP (Model Context Protocol) server that bridges AI agents into Minecraft GTNH chat via the **Scribe** mod. The agent appears as a player — it reads chat messages, responds, writes books, and can control the game through a local HTTP API.
 
-**Cross-platform** — the MCP server is pure Python (Windows, macOS, Linux). The Scribe mod is pure Java (anywhere Forge runs). Works with any MCP-compatible agent: Hermes, Claude, Codex, OpenClaw, Pi-agent, etc.
+**Cross-platform** — the MCP server is pure Python (Windows, macOS, Linux). The Scribe mod is pure Java (anywhere Forge runs). Works with any MCP-compatible agent: Claude, Codex, OpenClaw, Pi-agent, etc.
 
 ## Architecture
 
 ```
 ┌──────────────────────┐     MCP (stdio)      ┌──────────────────────┐
 │   AI Agent            │ ◄─────────────────► │  gtnh_chat_mcp.py    │
-│   (Hermes, Claude,    │                      │  (Python MCP server) │
-│    Codex, OpenClaw,   │                      └──────────┬───────────┘
-│    Pi-agent, etc.)    │                                 │
+│   (Claude, Codex,     │                      │  (Python MCP server) │
+│    OpenClaw, Pi-agent,│                      └──────────┬───────────┘
+│    etc.)              │                                 │
 └──────────────────────┘                          HTTP (localhost:25566)
                                                          │
                                               ┌──────────▼───────────┐
