@@ -9,6 +9,7 @@ import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Configuration;
 import org.apache.logging.log4j.LogManager;
@@ -80,9 +81,7 @@ public class ScribeMod {
             public void processCommand(ICommandSender sender, String[] args) {
                 if (args.length == 0) {
                     sender.addChatMessage(
-                        new net.minecraft.util.ChatComponentText(
-                            "§e[Scribe]§r Commands: §n/scribe guide§r, §n/scribe talk on§r, §n/scribe talk off§r"
-                        )
+                        scribeMsg("Commands: " + ul("/scribe guide") + ", " + ul("/scribe talk on") + ", " + ul("/scribe talk off"))
                     );
                     return;
                 }
@@ -97,31 +96,23 @@ public class ScribeMod {
                     if ("on".equalsIgnoreCase(args[1])) {
                         talkEnabled = true;
                         sender.addChatMessage(
-                            new net.minecraft.util.ChatComponentText(
-                                "§e[Scribe]§r Talk mode: §aON§r — listening to all chat"
-                            )
+                            scribeMsg("Talk mode: " + green("ON") + " — listening to all chat")
                         );
                         LOG.info("Scribe talk mode enabled (all chat)");
                     } else if ("off".equalsIgnoreCase(args[1])) {
                         talkEnabled = false;
                         sender.addChatMessage(
-                            new net.minecraft.util.ChatComponentText(
-                                "§e[Scribe]§r Talk mode: §cOFF§r — only responding to §n@scribe§r messages"
-                            )
+                            scribeMsg("Talk mode: " + red("OFF") + " — only responding to " + ul("@scribe") + " messages")
                         );
                         LOG.info("Scribe talk mode disabled (@scribe only)");
                     } else {
                         sender.addChatMessage(
-                            new net.minecraft.util.ChatComponentText(
-                                "§e[Scribe]§r Usage: §n/scribe talk on§r or §n/scribe talk off§r"
-                            )
+                            scribeMsg("Usage: " + ul("/scribe talk on") + " or " + ul("/scribe talk off"))
                         );
                     }
                 } else {
                     // Treat anything else as a direct message to Scribe
-                    // e.g. /scribe scan for ores, /scribe "how do I make steel?"
                     String message = String.join(" ", args);
-                    // Strip surrounding quotes if present
                     if (message.startsWith("\"") && message.endsWith("\"")) {
                         message = message.substring(1, message.length() - 1);
                     }
@@ -130,16 +121,14 @@ public class ScribeMod {
                         message
                     );
                     sender.addChatMessage(
-                        new net.minecraft.util.ChatComponentText(
-                            "§e[Scribe]§r §oMessage sent.§r"
-                        )
+                        scribeMsg(italic("Message sent."))
                     );
                 }
             }
 
             @Override
             public int getRequiredPermissionLevel() {
-                return 0; // anyone can use it
+                return 0;
             }
         });
     }
@@ -150,5 +139,32 @@ public class ScribeMod {
             server.stop();
             LOG.info("Scribe API stopped");
         }
+    }
+
+    // --- Chat formatting helpers (use EnumChatFormatting, not § codes) ---
+
+    private static net.minecraft.util.IChatComponent scribeMsg(String text) {
+        net.minecraft.util.ChatComponentText msg = new net.minecraft.util.ChatComponentText("");
+        msg.appendSibling(new net.minecraft.util.ChatComponentText(
+            EnumChatFormatting.YELLOW + "[Scribe]" + EnumChatFormatting.RESET + " "
+        ));
+        msg.appendSibling(new net.minecraft.util.ChatComponentText(text));
+        return msg;
+    }
+
+    private static String green(String text) {
+        return EnumChatFormatting.GREEN + text + EnumChatFormatting.RESET;
+    }
+
+    private static String red(String text) {
+        return EnumChatFormatting.RED + text + EnumChatFormatting.RESET;
+    }
+
+    private static String ul(String text) {
+        return EnumChatFormatting.UNDERLINE + text + EnumChatFormatting.RESET;
+    }
+
+    private static String italic(String text) {
+        return EnumChatFormatting.ITALIC + text + EnumChatFormatting.RESET;
     }
 }

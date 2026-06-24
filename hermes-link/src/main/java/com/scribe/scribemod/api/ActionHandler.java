@@ -204,9 +204,57 @@ public class ActionHandler {
         while (start < json.length() && (json.charAt(start) == ' ' || json.charAt(start) == '\t')) start++;
         if (start >= json.length() || json.charAt(start) != '"') return null;
         start++; // skip opening quote
-        int end = json.indexOf("\"", start);
-        if (end == -1) return null;
-        return json.substring(start, end);
+        int end = start;
+        while (end < json.length()) {
+            if (json.charAt(end) == '"' && (end == start || json.charAt(end - 1) != '\\')) {
+                break;
+            }
+            end++;
+        }
+        if (end >= json.length()) return null;
+        return unescapeJsonString(json.substring(start, end));
+    }
+
+    private static String unescapeJsonString(String s) {
+        StringBuilder sb = new StringBuilder();
+        int i = 0;
+        while (i < s.length()) {
+            char c = s.charAt(i);
+            if (c == '\\' && i + 1 < s.length()) {
+                char next = s.charAt(i + 1);
+                switch (next) {
+                    case '"': sb.append('"'); i += 2; continue;
+                    case '\\': sb.append('\\'); i += 2; continue;
+                    case '/': sb.append('/'); i += 2; continue;
+                    case 'b': sb.append('\b'); i += 2; continue;
+                    case 'f': sb.append('\f'); i += 2; continue;
+                    case 'n': sb.append('\n'); i += 2; continue;
+                    case 'r': sb.append('\r'); i += 2; continue;
+                    case 't': sb.append('\t'); i += 2; continue;
+                    case 'u':
+                        if (i + 5 < s.length()) {
+                            String hex = s.substring(i + 2, i + 6);
+                            try {
+                                int code = Integer.parseInt(hex, 16);
+                                sb.append((char) code);
+                                i += 6;
+                                continue;
+                            } catch (NumberFormatException e) {}
+                        }
+                        sb.append(c);
+                        i++;
+                        break;
+                    default:
+                        sb.append(next);
+                        i += 2;
+                        continue;
+                }
+            } else {
+                sb.append(c);
+                i++;
+            }
+        }
+        return sb.toString();
     }
 
     private static int extractJsonInt(String json, String key, int defaultVal) {
