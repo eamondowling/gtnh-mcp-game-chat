@@ -26,6 +26,7 @@ public class ScribeMod {
     public static int port = 25566;
     public static boolean allowActions = true;
     public static String authToken = "";
+    public static boolean talkEnabled = true;  // true = listen to all chat, false = @scribe only
 
     private ApiServer server;
     private ChatListener chatListener;
@@ -63,7 +64,7 @@ public class ScribeMod {
         server.start();
         LOG.info("Scribe API listening on http://localhost:{}", port);
 
-        // Register /scribe guide command
+        // Register /scribe command with subcommands: guide, talk on/off
         event.registerServerCommand(new CommandBase() {
             @Override
             public String getCommandName() {
@@ -72,22 +73,65 @@ public class ScribeMod {
 
             @Override
             public String getCommandUsage(ICommandSender sender) {
-                return "/scribe guide — get a new Scribe Agent Guide book";
+                return "/scribe guide | /scribe talk <on|off>";
             }
 
             @Override
             public void processCommand(ICommandSender sender, String[] args) {
-                if (args.length > 0 && "guide".equals(args[0])) {
+                if (args.length == 0) {
+                    sender.addChatMessage(
+                        new net.minecraft.util.ChatComponentText(
+                            "§e[Scribe]§r Commands: §n/scribe guide§r, §n/scribe talk on§r, §n/scribe talk off§r"
+                        )
+                    );
+                    return;
+                }
+
+                if ("guide".equals(args[0])) {
                     if (sender instanceof EntityPlayerMP) {
                         GuideBook.giveToPlayer((EntityPlayerMP) sender);
                     } else {
-                        // Console sender — just log
                         LOG.info("Guide book requested from console (no player to give to)");
                     }
+                } else if ("talk".equals(args[0]) && args.length >= 2) {
+                    if ("on".equalsIgnoreCase(args[1])) {
+                        talkEnabled = true;
+                        sender.addChatMessage(
+                            new net.minecraft.util.ChatComponentText(
+                                "§e[Scribe]§r Talk mode: §aON§r — listening to all chat"
+                            )
+                        );
+                        LOG.info("Scribe talk mode enabled (all chat)");
+                    } else if ("off".equalsIgnoreCase(args[1])) {
+                        talkEnabled = false;
+                        sender.addChatMessage(
+                            new net.minecraft.util.ChatComponentText(
+                                "§e[Scribe]§r Talk mode: §cOFF§r — only responding to §n@scribe§r messages"
+                            )
+                        );
+                        LOG.info("Scribe talk mode disabled (@scribe only)");
+                    } else {
+                        sender.addChatMessage(
+                            new net.minecraft.util.ChatComponentText(
+                                "§e[Scribe]§r Usage: §n/scribe talk on§r or §n/scribe talk off§r"
+                            )
+                        );
+                    }
                 } else {
+                    // Treat anything else as a direct message to Scribe
+                    // e.g. /scribe scan for ores, /scribe "how do I make steel?"
+                    String message = String.join(" ", args);
+                    // Strip surrounding quotes if present
+                    if (message.startsWith("\"") && message.endsWith("\"")) {
+                        message = message.substring(1, message.length() - 1);
+                    }
+                    ChatListener.recordDirectMessage(
+                        sender.getCommandSenderName(),
+                        message
+                    );
                     sender.addChatMessage(
                         new net.minecraft.util.ChatComponentText(
-                            "§e[Scribe]§r Use §n/scribe guide§r to get the instruction book."
+                            "§e[Scribe]§r §oMessage sent.§r"
                         )
                     );
                 }

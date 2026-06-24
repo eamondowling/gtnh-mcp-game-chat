@@ -43,6 +43,8 @@ public class ApiServer {
             server.createContext("/action/book", new BookHandler(allowActions));
             server.createContext("/chat/history", new ChatHistoryHandler());
             server.createContext("/chat/poll", new ChatPollHandler());
+            server.createContext("/chat/direct/history", new ChatDirectHistoryHandler());
+            server.createContext("/chat/direct/poll", new ChatDirectPollHandler());
 
             server.start();
         } catch (IOException e) {
@@ -105,6 +107,8 @@ public class ApiServer {
                 "\"GET /world/blocks?x=0&y=64&z=0&radius=5\"," +
                 "\"GET /chat/history\"," +
                 "\"GET /chat/poll?since=0&timeout=30000\"," +
+                "\"GET /chat/direct/history\"," +
+                "\"GET /chat/direct/poll?since=0&timeout=30000\"," +
                 "\"POST /action/chat\"," +
                 "\"POST /action/click\"," +
                 "\"POST /action/move\"," +
@@ -190,5 +194,64 @@ public class ApiServer {
             }
         }
         return null;
+    }
+
+    // --- Direct chat history handler (@scribe messages only) ---
+
+    static class ChatDirectHistoryHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if (!"GET".equals(exchange.getRequestMethod())) {
+                sendError(exchange, 405, "Method not allowed");
+                return;
+            }
+
+            List<ChatListener.ChatMessage> messages = ChatListener.getDirectHistory();
+            StringBuilder sb = new StringBuilder("{\"messages\":[");
+            boolean first = true;
+            for (ChatListener.ChatMessage msg : messages) {
+                if (!first) sb.append(",");
+                first = false;
+                sb.append(msg.toJson());
+            }
+            sb.append("]}");
+            sendJson(exchange, 200, sb.toString());
+        }
+    }
+
+    // --- Direct chat poll handler (long-poll for @scribe messages) ---
+
+    static class ChatDirectPollHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if (!"GET".equals(exchange.getRequestMethod())) {
+                sendError(exchange, 405, "Method not allowed");
+                return;
+            }
+
+            long since = 0;
+            long timeout = 30000;
+            String qSince = getQueryParam(exchange, "since");
+            String qTimeout = getQueryParam(exchange, "timeout");
+            if (qSince != null) {
+                try { since = Long.parseLong(qSince); } catch (NumberFormatException ignored) {}
+            }
+            if (qTimeout != null) {
+                try { timeout = Long.parseLong(qTimeout); } catch (NumberFormatException ignored) {}
+            }
+
+            List<ChatListener.ChatMessage> messages = ChatListener.pollDirectMessages(since, timeout);
+            boolean timedOut = messages.isEmpty();
+
+            StringBuilder sb = new StringBuilder("{\"messages\":[");
+            boolean first = true;
+            for (ChatListener.ChatMessage msg : messages) {
+                if (!first) sb.append(",");
+                first = false;
+                sb.append(msg.toJson());
+            }
+            sb.append("],\"timed_out\":").append(timedOut).append("}");
+            sendJson(exchange, 200, sb.toString());
+        }
     }
 }
