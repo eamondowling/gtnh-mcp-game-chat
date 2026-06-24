@@ -152,7 +152,7 @@ def tool_ping() -> str:
     result = link.ping()
     if "error" in result:
         return f"MINECRAFT OFFLINE: {result['error']}"
-    return f"Connected to Hermes Link {result.get('version', '?')} — {len(result.get('endpoints', []))} endpoints available"
+    return f"Connected to {result.get('mod', 'Scribe')} {result.get('version', '?')} — {len(result.get('endpoints', []))} endpoints available"
 
 
 def tool_chat_read() -> str:
