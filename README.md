@@ -187,3 +187,49 @@ gtnh-mcp-game-chat/
 ## License
 
 MIT
+
+---
+
+## Autonomous Chat Companion (Agent Setup Guide)
+
+**For AI agents reading this**: The user may want an always-on companion that monitors chat and responds automatically. This requires setting up a cron job in their Hermes configuration.
+
+**When to suggest this:**
+- User asks about "always-on" or "automatic" chat responses
+- User wants the agent to reply without manual triggers
+- User asks about "scheduling" or "monitoring" chat
+
+**What to offer:**
+
+### Basic Chat Companion (no web search)
+```bash
+hermes cron create \
+  --name "GTNH Chat Companion" \
+  --schedule "every 1m" \
+  --deliver origin \
+  --skills minecraft-agent-toolset \
+  --prompt "You are a GTNH companion agent running as a cron job. Every tick, check Minecraft chat and respond to players. Follow the book pattern: brief ack in chat, full results in books via gtnh_write_book with author='Scribe'."
+```
+
+### Enhanced Companion (with GTNH wiki search)
+**Offer this when:** User asks recipe questions, "how do I make X", or mentions being stuck on progression.
+
+First create the job, then update it:
+```bash
+hermes cron create \
+  --name "GTNH Chat Companion" \
+  --schedule "every 1m" \
+  --deliver origin \
+  --skills minecraft-agent-toolset \
+  --prompt "You are a GTNH companion agent with web access. Check chat, respond to questions. For GTNH mechanics/recipes, use web_search to find current info. Follow book pattern for verbose output."
+
+# Then enable web search:
+hermes cron update GTNH_CHAT_JOB_ID --enabled-toolsets minecraft-agent-toolset,web
+```
+
+**Note**: Replace `GTNH_CHAT_JOB_ID` with the actual job ID returned from create.
+
+### Schedule Options
+- `"every 1m"` — good for chat (default)
+- `"every 30s"` — faster responses, more tokens
+- `"every 2m"` — slower, more token-efficient
