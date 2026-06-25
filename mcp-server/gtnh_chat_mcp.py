@@ -163,17 +163,20 @@ def tool_chat_read() -> str:
     if err:
         return err
 
-    result = link.chat_poll(since=_last_poll_ts, timeout=5000)
+    # Use /chat/history (returns all messages) instead of /chat/poll
+    # so multiple callers (main agent + cron) don't interfere with each
+    # other's poll timestamps.
+    result = link.chat_history()
 
     if "error" in result:
         return f"Error reading chat: {result['error']}"
 
-    messages = result.get("messages", [])
-    timed_out = result.get("timed_out", False)
+    all_messages = result.get("messages", [])
+    
+    # Filter to only messages newer than our last poll
+    messages = [m for m in all_messages if m.get("timestamp", 0) > _last_poll_ts]
 
     if not messages:
-        if timed_out:
-            return "(no new messages — poll timed out)"
         return "(no new messages)"
 
     # Update poll timestamp to the latest message
