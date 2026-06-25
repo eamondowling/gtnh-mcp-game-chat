@@ -136,6 +136,16 @@ link = HermesLink(BASE_URL, AUTH_TOKEN)
 # Track the last poll timestamp so we only get new messages each call
 _last_poll_ts: int = 0
 
+# When _last_poll_ts is 0 (fresh session), use a recent window instead
+# of fetching ALL messages. Each cron run is a fresh session.
+import time as _time
+def _get_since_ts() -> int:
+    global _last_poll_ts
+    if _last_poll_ts == 0:
+        # First call in this session — only look back 60 seconds
+        return int((_time.time() - 60) * 1000)
+    return _last_poll_ts
+
 
 def _check_connected() -> str | None:
     """Returns error string if not connected, None if OK."""
@@ -164,9 +174,9 @@ def tool_chat_read() -> str:
         return err
 
     # Use /chat/poll with a short timeout. Each cron run is a fresh session
-    # so _last_poll_ts starts at 0. The poll returns only messages newer than
-    # the since timestamp, avoiding re-reading old messages.
-    result = link.chat_poll(since=_last_poll_ts, timeout=3000)
+    # so _last_poll_ts starts at 0. _get_since_ts() limits the first poll
+    # to the last 60 seconds to avoid flooding the agent with old messages.
+    result = link.chat_poll(since=_get_since_ts(), timeout=3000)
 
     if "error" in result:
         return f"Error reading chat: {result['error']}"
