@@ -64,10 +64,8 @@ public class ActionHandler {
             server.getConfigurationManager().sendChatMsg(
                 new ChatComponentText("<" + player.getCommandSenderName() + "> " + message)
             );
-            // Record in chat history so the agent can read its own messages
-            com.scribe.scribemod.chat.ChatListener.recordMessage(
-                player.getCommandSenderName(), message
-            );
+            // Do NOT record in chat history — prevents echo loop where
+            // the cron reads its own messages and responds to them.
 
             ApiServer.sendJson(exchange, 200, "{\"sent\":true,\"message\":\"" + ApiServer.escapeJson(message) + "\"}");
         }
