@@ -142,8 +142,9 @@ import time as _time
 def _get_since_ts() -> int:
     global _last_poll_ts
     if _last_poll_ts == 0:
-        # First call in this session — only look back 60 seconds
-        return int((_time.time() - 60) * 1000)
+        # First call in this session — get all messages.
+        # The agent prompt instructs to only respond to the last 1-2.
+        return 0
     return _last_poll_ts
 
 
